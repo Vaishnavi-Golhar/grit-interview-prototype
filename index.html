@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>GRIT Interview Scheduling – Prototype</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b2033;--mu:#5d6580;--pr:#3b5bdb;--bd:#dde1ee;--ok:#2b8a3e;--bad:#c92a2a;--warn:#b7791f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12141c;--card:#1c2030;--tx:#eceffa;--mu:#a2a9c4;--pr:#8ea2ff;--bd:#343a54;--ok:#69db7c;--bad:#ff8787;--warn:#ffd43b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5}
+.w{max-width:900px;margin:0 auto;padding:14px}h1{font-size:20px;margin:6px 0}h2{font-size:17px;margin:14px 0 6px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}nav button{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px}nav button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0}.mu{color:var(--mu);font-size:13px}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:bold;border:1px solid currentColor}
+.b{border:0;background:var(--pr);color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px;margin:4px 4px 0 0}.b.g{background:transparent;color:var(--pr);border:1px solid var(--pr)}.b.ok{background:var(--ok);color:#fff}.b.bad{background:var(--bad);color:#fff}.b.wr{background:var(--warn);color:#000}.b:disabled{opacity:.4;cursor:not-allowed}
+.r{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--bd)}.r:first-child{border-top:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.two{grid-template-columns:1fr}}
+select,input{padding:7px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:14px}
+.msg{border-left:4px solid var(--pr);padding:8px 12px;background:var(--bg);border-radius:6px;margin:6px 0;font-size:15px}
+</style></head><body><div class="w">
+<h1>GRIT Interview Scheduling – Prototype</h1><div class="mu">Track: AI Product Mastery, Novice badge. Demo only. Data stays in this page and resets when you refresh. Times are in IST. You are viewing as the student “Can”.</div>
+<nav id="nav"></nav><div id="v"></div></div>
+<script>
+const N={eligible:"Eligible",booked:"Booked",pending:"Result awaited",passed:"Badge earned",failed:"Not cleared",retake:"Retake later",noshow:"Missed",nullified:"Badge removed"};
+const COL={eligible:"--pr",booked:"--pr",pending:"--warn",passed:"--ok",failed:"--bad",retake:"--warn",noshow:"--bad",nullified:"--bad"};
+let stu={Can:"eligible",Kiran:"booked",Meera:"eligible",Arjun:"eligible",Sana:"passed",Dev:"retake"};
+let slots=[{id:1,iv:"Asha",t:"Mon 16 Nov, 10:00 AM",st:null},{id:2,iv:"Asha",t:"Mon 16 Nov, 10:30 AM",st:null},{id:3,iv:"Asha",t:"Mon 16 Nov, 11:00 AM",st:"Kiran"},{id:4,iv:"Ravi",t:"Mon 16 Nov, 4:00 PM",st:null},{id:5,iv:"Ravi",t:"Tue 17 Nov, 4:30 PM",st:null},{id:6,iv:"Asha",t:"Tue 17 Nov, 11:00 AM",st:null}];
+let tab="home",ivSel="Asha",ba="passed",nid=7,note="";
+const mySlot=()=>slots.find(s=>s.st==="Can");
+const tg=k=>`<span class="tag" style="color:var(${COL[k]})">${N[k]}</span>`;
+function info(k,s){const t=s?s.t+" IST with "+s.iv:"";return{
+eligible:["You can book your interview","You have cleared all skill levels for the Novice badge in AI Product Mastery. Your Level Clearance Interview is the last step. Pick a slot to book it.","Book a slot"],
+booked:["Your interview is booked","Your interview is booked for "+t+". Join from this page 10 minutes early.","Change or cancel"],
+pending:["Interview done, result awaited","Your interview is over. The result is being updated. You will get a message as soon as it is ready.",""],
+passed:["Congratulations, badge earned!","You passed your Level Clearance Interview. Your Novice badge and Miles are now added, and you are now a Qualiflyer.",""],
+failed:["Not cleared this time","You did not clear this interview. You can try again from 23 Nov. Read the feedback and prepare.","View feedback"],
+retake:["Retake later","The interviewer asked for a retake. You can book again from 23 Nov. Read the feedback and try again.","View feedback"],
+noshow:["You missed your interview","You did not join your interview. You can book again from 23 Nov.",""],
+nullified:["Badge removed","Your badge was removed because malpractice was found. Contact the GRIT team if you think this is a mistake.",""]}[k]}
+function card(k,s){const i=info(k,s);return`<div class="c"><div>${tg(k)}</div><h2>${i[0]}</h2><div>${i[1]}</div>${i[2]?`<button class="b" onclick="go('${k==="eligible"?"book":k==="booked"?"book":"home"}')">${i[2]}</button>`:""}</div>`}
+function badgeLine(k){return{eligible:"Novice badge: locked. Book your Level Clearance Interview to earn it. Status: Pre-Qualiflyer",booked:"Novice badge: locked. Interview booked. Status: Pre-Qualiflyer",pending:"Novice badge: waiting for result. Status: Pre-Qualiflyer",passed:"Novice badge: EARNED ✔ Miles added. Status: Qualiflyer, now on the leaderboard",failed:"Novice badge: locked. Retake from 23 Nov. Earn your first badge by Dec 2026. Status: Pre-Qualiflyer",retake:"Novice badge: locked. Retake from 23 Nov. Earn your first badge by Dec 2026. Status: Pre-Qualiflyer",noshow:"Novice badge: locked. Book again from 23 Nov. Status: Pre-Qualiflyer",nullified:"Novice badge and its Miles: removed. Status: back to Pre-Qualiflyer"}[k]}
+function teamLine(k){return{booked:"Team view: Can is under BOOKED",passed:"Team view: Can moved to DONE – Passed",failed:"Team view: Can moved to DONE – Failed",retake:"Team view: Can moved to DONE – Retake later",pending:"Team view: Can is under RESULT OVERDUE",noshow:"Team view: Can moved to DONE – Missed",nullified:"Team view: Can marked NULLIFIED",eligible:"Team view: Can is under NOT BOOKED"}[k]}
+const V={
+home(){let k=stu.Can;return`<div class="mu">Demo: jump to a state <select onchange="stu.Can=this.value;if(this.value==='booked'&&!mySlot()){slots[0].st='Can'}go('home')">${Object.keys(N).map(x=>`<option value="${x}" ${x===k?"selected":""}>${N[x]}</option>`).join("")}</select></div><h2>Student home</h2>${card(k,mySlot())}<div class="c">${badgeLine(k)}</div>`},
+book(){let k=stu.Can,m=mySlot();let h=`<h2>Book your interview</h2>`+(note?`<div class="msg">${note}</div>`:"");
+if(m)h+=`<div class="c">${tg("booked")} You have a booking: <b>${m.t}</b> with ${m.iv}.<br><button class="b g" onclick="cancel()">Cancel booking</button><div class="mu">Cancel up to 4 hours before. Later cancels count as missed.</div></div>`;
+else if(k!=="eligible")h+=`<div class="c">You can book only when your status is “Eligible”. Your status now: ${tg(k)}</div>`;
+return h+`<div class="c">${slots.map(s=>`<div class="r"><span>${s.t} <span class="mu">with ${s.iv}, 30 min</span></span>${s.st?`<span class="mu">Taken</span>`:`<button class="b" ${k==="eligible"&&!m?"":"disabled"} onclick="bk(${s.id})">Book</button>`}</div>`).join("")}</div>`},
+iv(){let mine=slots.filter(s=>s.iv===ivSel);return`<h2>Interviewer: daily schedule</h2><div>I am <select onchange="ivSel=this.value;go('iv')"><option ${ivSel==="Asha"?"selected":""}>Asha</option><option ${ivSel==="Ravi"?"selected":""}>Ravi</option></select></div>
+<div class="c">${mine.map(s=>{let n=s.st,k=n&&stu[n];return`<div class="r"><span><b>${s.t}</b><br>${n?`Student: ${n} ${tg(k)}`:`<span class="mu">Open slot</span>`}</span><span>${!n?`<button class="b g" onclick="rm(${s.id})">Remove</button>`:k==="booked"||k==="pending"?`<button class="b ok" onclick="rec('${n}','passed')">Pass</button><button class="b bad" onclick="rec('${n}','failed')">Fail</button><button class="b wr" onclick="rec('${n}','retake')">Retake later</button><button class="b g" onclick="rec('${n}','noshow')">No-show</button><button class="b g" onclick="cx(${s.id})">Cancel interview</button>`:""}</span></div>`}).join("")||"No slots yet."}</div>
+<div class="c"><b>Add availability</b><br><input id="nt" placeholder="e.g. Wed 18 Nov, 3:00 PM"> <button class="b" onclick="add()">Add slot</button><div class="mu">A booked slot cannot be deleted. Use “Cancel interview” so the student is told.</div></div>`},
+team(){let g=(f)=>Object.keys(stu).filter(f);let row=n=>{let s=slots.find(x=>x.st===n);return`<div class="r"><span>${n}</span><span>${tg(stu[n])} <span class="mu">${s?s.t:""}</span></span></div>`};
+return`<h2>Interview team: who has booked</h2><div class="c"><b>Not booked (${g(n=>stu[n]==="eligible").length})</b>${g(n=>stu[n]==="eligible").map(row).join("")||"<div class=mu>None</div>"}</div><div class="c"><b>Booked (${g(n=>stu[n]==="booked").length})</b>${g(n=>stu[n]==="booked").map(row).join("")||"<div class=mu>None</div>"}</div><div class="c"><b>Done or other</b>${g(n=>!["eligible","booked"].includes(stu[n])).map(row).join("")}</div>`},
+msg(){return`<h2>The 3 most important student messages</h2>
+<div class="c"><b>1. Booking confirmed</b><div class="msg">Your interview is booked for Mon 16 Nov, 10:00 AM IST with Asha. Join from your dashboard 10 minutes early.</div></div>
+<div class="c"><b>2. Interview cancelled by interviewer (action needed)</b><div class="msg">Your interview on Mon 16 Nov, 10:00 AM was cancelled because the interviewer is not available. Sorry for this. Please book a new slot.</div></div>
+<div class="c"><b>3. Result ready</b><div class="msg"><b>Pass:</b> Congratulations! You passed your Level Clearance Interview. Your Novice badge and Miles are now added, and you are now a Qualiflyer.</div><div class="msg"><b>Retake later:</b> The interviewer asked for a retake. You can book again from 23 Nov. Read the feedback and try again. Remember, your first badge is needed by Dec 2026.</div><div class="msg"><b>Fail:</b> You did not clear this interview. You can try again from 23 Nov. Read the feedback and prepare.</div></div>`},
+ba(){const side=(k,t)=>`<div><div class="mu"><b>${t}</b></div>${card(k,{t:"Mon 16 Nov, 10:00 AM",iv:"Asha"})}<div class="c">${badgeLine(k)}</div><div class="c mu">${teamLine(k)}</div></div>`;
+return`<h2>Before and after the result</h2><div>After result: <select onchange="ba=this.value;go('ba')">${["passed","failed","retake","noshow","nullified"].map(x=>`<option value="${x}" ${x===ba?"selected":""}>${N[x]}</option>`).join("")}</select></div><div class="two">${side("booked","BEFORE (interview booked)")}${side(ba,"AFTER (result recorded)")}</div>`}};
+const T=[["home","Student home"],["book","Book slot"],["iv","Interviewer"],["team","Team view"],["msg","Messages"],["ba","Before & After"]];
+function go(t){if(t!==tab&&t!=="book")note="";tab=t;document.getElementById("nav").innerHTML=T.map(a=>`<button class="${a[0]===tab?"on":""}" onclick="go('${a[0]}')">${a[1]}</button>`).join("");document.getElementById("v").innerHTML=V[tab]()}
+function bk(id){let s=slots.find(x=>x.id===id);if(s.st){note="Slot just taken, please pick another.";return go("book")}s.st="Can";stu.Can="booked";note="Your interview is booked for "+s.t+" IST with "+s.iv+". Join from your dashboard 10 minutes early.";go("book")}
+function cancel(){let m=mySlot();m.st=null;stu.Can="eligible";note="Booking cancelled. You can book another slot.";go("book")}
+function rec(n,k){stu[n]=k;go("iv")}
+function cx(id){let s=slots.find(x=>x.id===id);stu[s.st]="eligible";if(s.st==="Can")note="";s.st=null;slots=slots.filter(x=>x.id!==id);go("iv")}
+function rm(id){slots=slots.filter(x=>x.id!==id);go("iv")}
+function add(){let v=document.getElementById("nt").value.trim();if(!v)return;slots.push({id:nid++,iv:ivSel,t:v,st:null});go("iv")}
+go("home");
+</script></body></html>
